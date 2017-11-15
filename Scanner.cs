@@ -1,31 +1,29 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace cslox
+namespace CSLox
 {
+    using System;
+    using System.Collections.Generic;
     using static TokenType;
 
     internal class Scanner
     {
-
-        static readonly Dictionary<string, TokenType> Keywords = new Dictionary<string, TokenType>{
-            {"and", AND},
-            {"class", CLASS},
-            {"else", ELSE},
-            {"false", FALSE},
-            {"for", FOR},
-            {"fun", FUN},
-            {"if", IF},
-            {"nil", NIL},
-            {"or", OR},
-            {"print", PRINT},
-            {"return", RETURN},
-            {"super", SUPER},
-            {"this", THIS},
-            {"true", TRUE},
-            {"var", VAR},
-            {"while", WHILE}
+        private static readonly Dictionary<string, TokenType> Keywords = new Dictionary<string, TokenType>
+        {
+            { "and", AND },
+            { "class", CLASS },
+            { "else", ELSE },
+            { "false", FALSE },
+            { "for", FOR },
+            { "fun", FUN },
+            { "if", IF },
+            { "nil", NIL },
+            { "or", OR },
+            { "print", PRINT },
+            { "return", RETURN },
+            { "super", SUPER },
+            { "this", THIS },
+            { "true", TRUE },
+            { "var", VAR },
+            { "while", WHILE },
         };
 
         private string source;
@@ -46,7 +44,8 @@ namespace cslox
                 start = current;
                 ScanToken();
             }
-            tokens.Add(new Token(TokenType.EOF, "", null, line));
+
+            tokens.Add(new Token(EOF, string.Empty, null, line));
             return tokens;
         }
 
@@ -75,7 +74,10 @@ namespace cslox
                 case '/':
                     if (Match('/'))
                     {
-                        while (Peek() != '\n' && !IsAtEnd()) Advance();
+                        while (Peek() != '\n' && !IsAtEnd())
+                        {
+                            Advance();
+                        }
                     }
                     else if (Match('*'))
                     {
@@ -85,6 +87,7 @@ namespace cslox
                     {
                         AddToken(SLASH);
                     }
+
                     break;
                 case ' ':
                 case '\r':
@@ -97,11 +100,11 @@ namespace cslox
                     String();
                     break;
                 default:
-                    if (Char.IsDigit(c))
+                    if (char.IsDigit(c))
                     {
                         Number();
                     }
-                    else if (Char.IsLetter(c))
+                    else if (char.IsLetter(c))
                     {
                         Identifier();
                     }
@@ -109,6 +112,7 @@ namespace cslox
                     {
                         Program.Error(line, $"Unexpected character '{c}'.");
                     }
+
                     break;
             }
         }
@@ -128,10 +132,15 @@ namespace cslox
                 }
                 else
                 {
-                    if (Peek() == '\n') line += 1;
+                    if (Peek() == '\n')
+                    {
+                        line += 1;
+                    }
+
                     Advance();
                 }
             }
+
             if (level != 0)
             {
                 Program.Error(line, "Unterminated comment.");
@@ -142,32 +151,50 @@ namespace cslox
         {
             while (Peek() != '"' && !IsAtEnd())
             {
-                if (Peek() == '\n') line++;
+                if (Peek() == '\n')
+                {
+                    line++;
+                }
+
                 Advance();
             }
+
             if (IsAtEnd())
             {
                 Program.Error(line, "Unterminated string.");
                 return;
             }
+
             Advance();
             AddToken(STRING, source.Substring(start + 1, current - start - 2));
         }
 
         private void Number()
         {
-            while (Char.IsDigit(Peek())) Advance();
-            if (Peek() == '.' && Char.IsDigit(PeekNext()))
+            while (char.IsDigit(Peek()))
             {
                 Advance();
-                while (Char.IsDigit(Peek())) Advance();
             }
-            AddToken(NUMBER, Double.Parse(source.Substring(start, current - start)));
+
+            if (Peek() == '.' && char.IsDigit(PeekNext()))
+            {
+                Advance();
+                while (char.IsDigit(Peek()))
+                {
+                    Advance();
+                }
+            }
+
+            AddToken(NUMBER, double.Parse(source.Substring(start, current - start)));
         }
 
         private void Identifier()
         {
-            while (Char.IsLetterOrDigit(Peek())) Advance();
+            while (char.IsLetterOrDigit(Peek()))
+            {
+                Advance();
+            }
+
             var ident = source.Substring(start, current - start);
             AddToken(Keywords.GetValueOrDefault(ident, IDENTIFIER));
         }
@@ -179,24 +206,37 @@ namespace cslox
 
         private char Peek()
         {
-            if (IsAtEnd()) return '\0';
+            if (IsAtEnd())
+            {
+                return '\0';
+            }
+
             return source[current];
         }
 
         private char PeekNext()
         {
-            if (current + 1 >= source.Length) return '\0';
+            if (current + 1 >= source.Length)
+            {
+                return '\0';
+            }
+
             return source[current + 1];
         }
 
         private bool Match(char expected)
         {
-            if (IsAtEnd()) return false;
+            if (IsAtEnd())
+            {
+                return false;
+            }
+
             if (Peek() == expected)
             {
                 Advance();
                 return true;
             }
+
             return false;
         }
 
@@ -204,45 +244,4 @@ namespace cslox
 
         private bool IsAtEnd() => current >= source.Length;
     }
-
-    struct Token
-    {
-        public TokenType Type { get; }
-        public string Lexeme { get; }
-        public object Literal { get; }
-        public int Line { get; }
-
-        public Token(TokenType type, string lexeme, object literal, int line)
-        {
-            Type = type;
-            Lexeme = lexeme;
-            Literal = literal;
-            Line = line;
-        }
-
-        public override string ToString() => $"{Type} {Lexeme} {Literal}";
-    }
-    enum TokenType
-    {
-        // Single-character tokens.
-        LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
-        COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
-        QUESTION, COLON,
-
-        // One or two character tokens.
-        BANG, BANG_EQUAL,
-        EQUAL, EQUAL_EQUAL,
-        GREATER, GREATER_EQUAL,
-        LESS, LESS_EQUAL,
-
-        // Literals.
-        IDENTIFIER, STRING, NUMBER,
-
-        // Keywords.
-        AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
-        PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
-
-        EOF
-    }
-
 }

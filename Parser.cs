@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-
-namespace cslox
+namespace CSLox
 {
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.Serialization;
     using static TokenType;
+
     internal class Parser
     {
         private readonly List<Token> tokens;
@@ -15,6 +15,8 @@ namespace cslox
         {
             this.tokens = tokens;
         }
+
+        private bool IsAtEnd { get => Peek().Type == EOF; }
 
         public Expr Parse()
         {
@@ -73,10 +75,12 @@ namespace cslox
             return lhs;
         }
 
-        private Expr Comparison() {
+        private Expr Comparison()
+        {
             Expr expr = Addition();
 
-            while (Match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+            while (Match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL))
+            {
                 Token op = Previous();
                 Expr right = Addition();
                 expr = new Expr.Binary(expr, op, right);
@@ -127,9 +131,20 @@ namespace cslox
 
         private Expr Primary()
         {
-            if (Match(FALSE)) return new Expr.Literal(false);
-            if (Match(TRUE)) return new Expr.Literal(true);
-            if (Match(NIL)) return new Expr.Literal(null);
+            if (Match(FALSE))
+            {
+                return new Expr.Literal(false);
+            }
+
+            if (Match(TRUE))
+            {
+                return new Expr.Literal(true);
+            }
+
+            if (Match(NIL))
+            {
+                return new Expr.Literal(null);
+            }
 
             if (Match(NUMBER, STRING))
             {
@@ -139,7 +154,7 @@ namespace cslox
             if (Match(LEFT_PAREN))
             {
                 Expr expr = Expression();
-                Consume(RIGHT_PAREN, "Expect ')' after expression.");
+                Consume(RIGHT_PAREN, "Expected ')' after expression.");
                 return new Expr.Grouping(expr);
             }
 
@@ -149,7 +164,9 @@ namespace cslox
         private Token Consume(TokenType type, string message)
         {
             if (Check(type))
+            {
                 return Advance();
+            }
 
             throw Error(Peek(), message);
         }
@@ -160,13 +177,16 @@ namespace cslox
             throw new ParseError();
         }
 
-        private void synchronize()
+        private void Synchronize()
         {
             Advance();
 
             while (!IsAtEnd)
             {
-                if (Previous().Type == SEMICOLON) return;
+                if (Previous().Type == SEMICOLON)
+                {
+                    return;
+                }
 
                 switch (Peek().Type)
                 {
@@ -192,11 +212,17 @@ namespace cslox
                 Advance();
                 return true;
             }
+
             return false;
         }
 
-        private Token Advance() {
-            if (!IsAtEnd) current += 1;
+        private Token Advance()
+        {
+            if (!IsAtEnd)
+            {
+                current += 1;
+            }
+
             return Previous();
         }
 
@@ -205,27 +231,5 @@ namespace cslox
         private Token Peek() => tokens[current];
 
         private Token Previous() => tokens[current - 1];
-
-        private bool IsAtEnd { get => Peek().Type == EOF; }
-    }
-
-    [Serializable]
-    internal class ParseError : Exception
-    {
-        public ParseError()
-        {
-        }
-
-        public ParseError(string message) : base(message)
-        {
-        }
-
-        public ParseError(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected ParseError(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

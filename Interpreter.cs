@@ -1,4 +1,4 @@
-namespace cslox
+namespace CSLox
 {
     internal class Interpreter : Expr.IVisitor<object>
     {

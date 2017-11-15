@@ -1,9 +1,7 @@
-using System;
-using System.Linq;
-using System.Text;
-
-namespace cslox
+namespace CSLox
 {
+    using System.Text;
+
     internal class AstPrinter : Expr.IVisitor<string>
     {
         public AstPrinter()
@@ -30,6 +28,7 @@ namespace cslox
                 sb.Append(" ");
                 sb.Append(expr.Accept(this));
             }
+
             sb.Append(")");
             return sb.ToString();
         }
